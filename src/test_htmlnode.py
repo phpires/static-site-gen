@@ -1,6 +1,6 @@
 import unittest
 
-from htmlnode import HTMLNode
+from htmlnode import HTMLNode, LeafNode
 
 class TestHTMLNode(unittest.TestCase):
     def test_to_html(self):
@@ -49,5 +49,29 @@ class TestHTMLNode(unittest.TestCase):
             html_node.props,
             None
         )
+    
+    def test_leaf_to_html_p(self):
+        node = LeafNode("Hello, world!", "p")
+        self.assertEqual(node.to_html(), "<p>Hello, world!</p>")
+    
+    def test_leaf_to_html_a(self):
+        node = LeafNode("Click me!", "a", {"href": "https://www.google.com"})
+        self.assertEqual(
+            node.to_html(),
+            '<a href="https://www.google.com">Click me!</a>'
+        )
 
+    def test_leaf_to_html_no_tag(self):
+        node = LeafNode("Raw text example.", None)
+        self.assertEqual(node.to_html(), "Raw text example.")
+    
+    def test_leaf_to_html_no_value(self):
+        node = LeafNode(None, None)
+        with self.assertRaises(ValueError):
+            node.to_html()
+    
+    def test_leaf_repr(self):
+        node = LeafNode("Click me!", "a", {"href": "https://www.google.com"})
+        expected_repr="LeafNode(tag=a, value=Click me!, props={'href': 'https://www.google.com'})"
+        self.assertEqual(str(node), expected_repr)
 
