@@ -19,53 +19,42 @@ def split_nodes_image(old_nodes):
     new_nodes = []
     for old_node in old_nodes:
         old_node_txt = old_node.text
-        images_markdown = extract_markdown_images(old_node_txt)
-        if len(images_markdown) == 0:
-            raise Exception("Not a image markdown section")
-        def create_new_nodes(images_markdown, old_node_txt):
-            nonlocal new_nodes
-            if len(images_markdown) == 0:
-                return
-            image_alt, image_link = images_markdown[0]
-            splitted_markdown = old_node_txt.split(f"![{image_alt}]({image_link})")
-            print(splitted_markdown)
-            if splitted_markdown[0] == "" and splitted_markdown[1] != "":
-                new_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
-                new_nodes.append(TextNode(splitted_markdown[1], TextType.TEXT))
-            elif splitted_markdown[0] == "" and splitted_markdown[1] == "":#single img case
-                new_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
-            else:
-                new_nodes.append(TextNode(splitted_markdown[0], TextType.TEXT))
-                new_nodes.append(TextNode(image_alt, TextType.IMAGE, image_link))
-            
-            return create_new_nodes(images_markdown[1:], splitted_markdown[1])
-    create_new_nodes(images_markdown, old_node_txt)
+        imgs_md = extract_markdown_images(old_node_txt)
+        if len(imgs_md) == 0:
+            new_nodes.append(old_node)
+            continue
+        for img_md in imgs_md:
+            alt_text, img_link = img_md
+            splitted_txt = old_node_txt.split(f"![{alt_text}]({img_link})", 1)
+            if len(splitted_txt) % 2 != 0:
+                raise Exception("Malformed image markdown")
+            if splitted_txt[0] != '':
+                new_nodes.append(TextNode(splitted_txt[0], TextType.TEXT))
+            new_nodes.append(TextNode(alt_text, TextType.IMAGE, img_link))
+            old_node_txt = splitted_txt[1]
+        if old_node_txt != '':
+            new_nodes.append(TextNode(old_node_txt, TextType.TEXT))
     return new_nodes
 
 def split_nodes_link(old_nodes):
     new_nodes = []
     for old_node in old_nodes:
         old_node_txt = old_node.text
-        links_markdown = extract_markdown_links(old_node_txt)
-        if len(links_markdown) == 0:
-            raise Exception("Not a link markdown section")
-        def create_new_nodes(links_markdown, old_node_txt):
-            nonlocal new_nodes
-            if len(links_markdown) == 0:
-                return
-            link_text, link_url = links_markdown[0]
-            splitted_markdown = old_node_txt.split(f"[{link_text}]({link_url})")
-            if splitted_markdown[0] == "" and splitted_markdown[1] != "":
-                new_nodes.append(TextNode(link_text, TextType.LINK, link_url))
-                new_nodes.append(TextNode(splitted_markdown[1], TextType.TEXT))
-            elif splitted_markdown[0] == "" and splitted_markdown[1] == "":
-                new_nodes.append(TextNode(link_text, TextType.LINK, link_url))
-            else:
-                new_nodes.append(TextNode(splitted_markdown[0], TextType.TEXT))
-                new_nodes.append(TextNode(link_text, TextType.LINK, link_url))
-            
-            return create_new_nodes(links_markdown[1:], splitted_markdown[1])
-    create_new_nodes(links_markdown, old_node_txt)
+        links_md = extract_markdown_links(old_node_txt)
+        if len(links_md) == 0:
+            new_nodes.append(old_node)
+            continue
+        for link_md in links_md:
+            link_text, link_url = link_md
+            splitted_txt = old_node_txt.split(f"[{link_text}]({link_url})", 1)
+            if len(splitted_txt) % 2 != 0:
+                raise Exception("Malformed link markdown")
+            if splitted_txt[0] != '':
+                new_nodes.append(TextNode(splitted_txt[0], TextType.TEXT))
+            new_nodes.append(TextNode(link_text, TextType.LINK, link_url))
+            old_node_txt = splitted_txt[1]
+        if old_node_txt != '':
+            new_nodes.append(TextNode(old_node_txt, TextType.TEXT))
     return new_nodes
 
 def extract_markdown_images(text):
