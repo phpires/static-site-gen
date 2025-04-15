@@ -1,9 +1,33 @@
 from textnode import TextNode, TextType
 import re
 
+def text_to_textnodes(text):
+    type_delimeter_dict = {
+        TextType.BOLD: "**",
+        TextType.ITALIC: "_",
+        TextType.CODE: "`",
+        TextType.IMAGE: "image",
+        TextType.LINK: "link"
+    }
+    
+    old_nodes = [TextNode(text, TextType.TEXT)]
+    for text_type in type_delimeter_dict:
+        delimeter = type_delimeter_dict[text_type]
+        if (text_type == TextType.IMAGE):
+            old_nodes = split_nodes_image(old_nodes)
+        elif (text_type == TextType.LINK):
+            old_nodes = split_nodes_link(old_nodes)
+        else:
+            old_nodes = split_nodes_delimiter(old_nodes, delimeter, text_type)
+    return old_nodes
+
+
 def split_nodes_delimiter(old_nodes, delimeter, text_type):
     new_nodes = []
     for old_node in old_nodes:
+        if old_node.text_type != TextType.TEXT:
+            new_nodes.append(old_node)
+            continue
         splitted_nodes = old_node.text.split(delimeter)
         if len(splitted_nodes) % 2 == 0:
             raise Exception("Malformed markdown. Section open?")
@@ -64,3 +88,6 @@ def extract_markdown_images(text):
 def extract_markdown_links(text):
     matches = re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
     return matches
+
+text = "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+text_to_textnodes(text)
