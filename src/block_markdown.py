@@ -20,7 +20,15 @@ def block_to_block_type(block):
         if block_type == BlockType.PARAGRAPH:
             continue
         pattern = block_type.value[0]
-        block_str = re.findall(pattern, block, re.DOTALL | re.MULTILINE)
-        if block_str:
+        
+        if re.findall(pattern, block, re.DOTALL | re.MULTILINE):
+            if block_type == BlockType.ORDERED_LIST:
+                lines = block.splitlines()
+                line_counter = 1
+                for line in lines:
+                    if (str(line_counter) != line[0]):
+                        return BlockType.PARAGRAPH
+                    line_counter += 1
+                return block_type
             return block_type
     return BlockType.PARAGRAPH
