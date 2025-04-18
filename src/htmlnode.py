@@ -1,3 +1,8 @@
+from enum import Enum
+
+class HTMLTagType(Enum):
+    CODE = "code",
+    PRE = "pre",
 
 class HTMLNode():
     def __init__(self, tag=None, value=None, children=None, props=None):
