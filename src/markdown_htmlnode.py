@@ -52,11 +52,12 @@ def block_to_html_node(block):
         return ParentNode("ul", get_inline_nodes_multiline(block, "li"))
     elif block_type == BlockType.ORDERED_LIST:
         return ParentNode("ol", get_inline_nodes_multiline(block, "li"))
-    else:
+    elif block_type == BlockType.PARAGRAPH:
         inline_nodes = list(map(text_node_to_html_node, text_to_textnodes(block)))
         if len(inline_nodes) == 0:
             return LeafNode(block, "p")
         return ParentNode("p", inline_nodes)
+    raise Exception("Invalid block type")
 
 md = """>a multiline
 >>blockquote"""
