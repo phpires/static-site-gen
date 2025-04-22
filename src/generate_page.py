@@ -1,4 +1,7 @@
+import os
+
 from block_markdown import markdown_to_blocks, block_to_block_type, BlockType
+from markdown_htmlnode import markdown_to_html_node
 
 def extract_title(markdown):
     blocks = markdown_to_blocks(markdown)
@@ -7,3 +10,24 @@ def extract_title(markdown):
         if block_type == BlockType.HEADING and block[1] != "#":
             return block.lstrip("#").strip()
     raise Exception("Not a h1 header.")
+
+def generate_page(from_path, template_path, dest_path):
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    with open(from_path) as md_file:
+        md_content = md_file.read()
+        print(f"Opening md file: {md_file.name}")
+    
+    with open(template_path) as template_html_file:
+        template_html_content = template_html_file.read()
+        print(f"Opening md file: {template_html_file.name}")
+    
+    html_content = markdown_to_html_node(md_content).to_html()
+    h1_title = extract_title(md_content)
+    page_html = template_html_content.replace("{{ Title }}", h1_title).replace("{{ Content }}", html_content)
+    
+    if not os.path.exists(os.path.dirname(dest_path)):
+        os.makedirs(os.path.dirname(dest_path))
+    
+    with open(dest_path, 'w') as f:
+        f.write(page_html)
+    
