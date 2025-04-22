@@ -5,9 +5,40 @@ from textnode import text_node_to_html_node
 
 def markdown_to_html_node(markdown):
     blocks = markdown_to_blocks(markdown)
+    html_nodes = []
     for block in blocks:
-        html_node = block_to_html_node(block)
-    return html_node.to_html()
+        html_nodes.append(block_to_html_node(block))
+    return ParentNode("div", html_nodes)
+
+def get_inline_nodes(block):
+    splitted_block = block.split(" ", maxsplit=1)
+    return list(map(text_node_to_html_node, text_to_textnodes(splitted_block[1])))
+
+def get_inline_nodes_multiline(block, html_tag):
+    inline_nodes = []
+    for element in block.splitlines():
+        inline_nodes.append(ParentNode(html_tag, get_inline_nodes(element)))
+    return inline_nodes
+
+def convert_from_code(block):
+    if not block.startswith("```") and not block.endswith("```"):
+        raise Exception("Malformed code block")
+    leaf_node = LeafNode(block.strip("```"), "code")
+    return ParentNode("pre", [leaf_node])
+
+def convert_from_heading(block):
+    if not block.startswith("#"):
+        raise Exception("Malformed headingblock")
+    header_level = block.split(" ", maxsplit=1)[0].count("#")
+    return ParentNode(f"h{header_level}", get_inline_nodes(block))
+
+def convert_from_blockquote(block):
+    new_blocks = []
+    for line in block.splitlines():
+        if not line.startswith(">"):
+            raise Exception("Malformed quote block")
+        new_blocks.append(line.strip(">"))
+    return ParentNode("blockquote", get_inline_nodes("".join(new_blocks)))
 
 def block_to_html_node(block):
     block_type = block_to_block_type(block)
@@ -15,25 +46,19 @@ def block_to_html_node(block):
         return convert_from_code(block)
     elif block_type == BlockType.HEADING:
         return convert_from_heading(block)
-    
-def convert_from_code(block):
-    leaf_node = LeafNode(block.strip("```"), "code") #Code não tem filho!
-    return ParentNode("pre", [leaf_node])
+    elif block_type == BlockType.QUOTE:
+        return convert_from_blockquote(block)
+    elif block_type == BlockType.UNORDERED_LIST:
+        return ParentNode("ul", get_inline_nodes_multiline(block, "li"))
+    elif block_type == BlockType.ORDERED_LIST:
+        return ParentNode("ol", get_inline_nodes_multiline(block, "li"))
+    else:
+        inline_nodes = list(map(text_node_to_html_node, text_to_textnodes(block)))
+        if len(inline_nodes) == 0:
+            return LeafNode(block, "p")
+        return ParentNode("p", inline_nodes)
 
-def convert_from_heading(block):
-    stripped_block = block.strip("#")
-    inline_text_nodes = text_to_textnodes(stripped_block)
-    inline_nodes = list(map(text_node_to_html_node, inline_text_nodes))
-    return ParentNode("head", inline_nodes)
+md = """>a multiline
+>>blockquote"""
 
-block = """## This is text that _should_ remain the **same** even with inline stuff"""
-print(markdown_to_html_node(block))
-"""
-1 - Quebrar o markdown em blocks
-2 - Encontrar os inlines dentro desses blocks
-    2.1 - Transformar em HTML (LeafNode?)
-3 - Adicionar os leafnodes gerados no ParentNode, que vai ser o block com os inlines dentro dele.
-4 - Um block dentro de um block?
-
-"""
-    
+#print(markdown_to_html_node(md).to_html())
