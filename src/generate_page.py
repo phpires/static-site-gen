@@ -19,24 +19,28 @@ def generate_page(from_path, template_path, dest_path):
     
     with open(template_path) as template_html_file:
         template_html_content = template_html_file.read()
-        print(f"Opening md file: {template_html_file.name}")
+        print(f"Opening html template: {template_html_file.name}")
     
     html_content = markdown_to_html_node(md_content).to_html()
     h1_title = extract_title(md_content)
     page_html = template_html_content.replace("{{ Title }}", h1_title).replace("{{ Content }}", html_content)
     
     if not os.path.exists(os.path.dirname(dest_path)):
+        print(f"Destiny path not found. Creating: {dest_path}")
         os.makedirs(os.path.dirname(dest_path))
     
     with open(dest_path, 'w') as f:
+        print(f"Creating html to {dest_path}")
         f.write(page_html)
 
 def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
     content_dir = os.listdir(dir_path_content)
-    print(f"Listing content on {content_dir}")
+    print(f"Listing content on {dir_path_content}: {content_dir}")
     for content in content_dir:
         content_path = os.path.join(dir_path_content, content)
+        print(f"Analyzing content on {content_path}")
         if os.path.isfile(content_path):
-            generate_page(content_path, template_path, dest_dir_path)
+            generate_page(content_path, template_path, os.path.join(dest_dir_path, "index.html"))
         else:
-            generate_pages_recursive(content_path, template_path, dest_dir_path)
+            new_dest_dir_path = os.path.join(dest_dir_path, content)
+            generate_pages_recursive(content_path, template_path, new_dest_dir_path)
